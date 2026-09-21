@@ -1,5 +1,12 @@
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || '';
+
+function toApiUrl(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
 export async function getJSON<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(path, { signal });
+  const response = await fetch(toApiUrl(path), { signal });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(body?.detail?.message ?? `The data service returned ${response.status}. Check that the backend is running.`);
@@ -8,7 +15,12 @@ export async function getJSON<T>(path: string, signal?: AbortSignal): Promise<T>
 }
 
 export async function postJSON<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal });
+  const response = await fetch(toApiUrl(path), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
     const detail = payload?.detail;
