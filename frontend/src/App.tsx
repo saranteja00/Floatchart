@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useMemo, useEffect, useRef, useState } from 'react';
-import { Activity, ArrowDown, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronRight, Compass, Database, Download, FileCheck2, FlaskConical, Globe2, HelpCircle, Layers3, ListFilter, LoaderCircle, Map, MessageSquare, Search, ShieldCheck, Table2, Waves, X } from 'lucide-react';
+import { Activity, ArrowDown, ArrowRight, Check, Compass, Database, Download, FileCheck2, FlaskConical, Globe2, HelpCircle, Layers3, ListFilter, LoaderCircle, Map, MessageSquare, Search, ShieldCheck, Table2, Waves, X } from 'lucide-react';
 import { getJSON } from './api';
 import { coordinates, dateLabel, floatColor, type Catalog, type Observation, type ProfileResult, type QueryResult } from './types';
 const OceanMap = lazy(() => import('./components/OceanMap'));
@@ -10,7 +10,6 @@ import Evidence from './components/Evidence';
 import QueryPanel from './components/QueryPanel';
 import DataFreshness from './components/DataFreshness';
 import SnapshotArchive from './components/SnapshotArchive';
-import WorkspaceSections from './components/WorkspaceSections';
 import SciencePanel from './components/SciencePanel';
 import ObservationReplay from './components/ObservationReplay';
 import { replayFrame, throughTime } from './exploration';
@@ -25,7 +24,7 @@ const DEPTHS = [{ label: 'Full profile', min: 0, max: 2100 }, { label: '0–200 
 
 export default function App() {
   const [analysisView, setAnalysisView] = useState('gradients');
-  const [workspacePage, setWorkspacePage] = useState(() => ['ask', 'explore', 'analyze', 'sources'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'ask');
+  const [workspacePage, setWorkspacePage] = useState(() => ['ask', 'explore', 'analyze', 'sources'].includes(window.location.hash.slice(1)) ? window.location.hash.slice(1) : 'ask');
   useEffect(() => { window.dispatchEvent(new Event('resize')); }, [workspacePage, analysisView]);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [investigation, setInvestigation] = useState<QueryResult | null>(null);
@@ -47,15 +46,15 @@ export default function App() {
   const help = useRef<HTMLDialogElement>(null);
   const [helpTab, setHelpTab] = useState<'start' | 'ask' | 'explore' | 'analyze' | 'sources'>('start');
   useEffect(() => {
-    const sync = () => setWorkspacePage(['ask', 'explore', 'analyze', 'sources'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'ask');
+    const sync = () => setWorkspacePage(['ask', 'explore', 'analyze', 'sources'].includes(window.location.hash.slice(1)) ? window.location.hash.slice(1) : 'ask');
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
   }, []);
   function navigateWorkspace(next: string) {
-    if (location.hash !== '#' + next) location.hash = next;
+    if (window.location.hash !== '#' + next) window.location.hash = next;
     setWorkspacePage(next);
     requestAnimationFrame(() => {
-      document.querySelector('.mission-navigation')?.scrollIntoView({ block: 'start', behavior: 'instant' });
+      document.querySelector('#research-workspace')?.scrollIntoView({ block: 'start', behavior: 'instant' });
     });
   }
 
@@ -163,7 +162,6 @@ export default function App() {
         <div className="workspace-heading" id="research-workspace" tabIndex={-1}><div><h1>{{ ask: 'Query workspace', explore: 'Ocean explorer', analyze: 'Analysis', sources: 'Data sources' }[workspacePage]}</h1></div><button className="button secondary" onClick={() => help.current?.showModal()}><HelpCircle size={15} />Help</button></div>
 
         {catalogError ? <section className="error-state" role="alert"><Database size={32} /><h2>The data workspace is unavailable</h2><p>{catalogError}</p><button className="button primary" onClick={() => setReload(v => v + 1)}>Try again</button></section> : !catalog ? <div className="loading-state" role="status"><LoaderCircle className="spin" />Opening the ocean workspace…</div> : <>
-          <WorkspaceSections active={workspacePage} onChange={navigateWorkspace} />
           <div className="workspace-pages" data-page={workspacePage}>
             <section className="sources-page" aria-label="Sources workspace">
               <DataFreshness snapshotId={catalog.snapshot_id} />
